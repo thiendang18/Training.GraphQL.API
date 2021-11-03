@@ -1,3 +1,5 @@
+using GraphQL.Server;
+using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -7,6 +9,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Training.GraphQL.API.GraphQL;
+using Training.GraphQL.API.IService;
+using Training.GraphQL.API.Service;
 
 namespace Training.GraphQL.API
 {
@@ -16,6 +21,16 @@ namespace Training.GraphQL.API
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IAssetService, AssetService>();
+            services.AddScoped<IUserAssetService, UserAssetService>();
+
+            services.AddScoped<AppSchema>();
+
+            services.AddGraphQL()
+                .AddGraphTypes(ServiceLifetime.Scoped)
+                .AddSystemTextJson()
+                .AddDataLoader();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -28,13 +43,8 @@ namespace Training.GraphQL.API
 
             app.UseRouting();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync("Hello World!");
-                });
-            });
+            app.UseGraphQL<AppSchema>();
+            app.UseGraphQLPlayground(options: new GraphQLPlaygroundOptions());
         }
     }
 }
